@@ -1,6 +1,6 @@
 # Soldered BME690 Environmental Sensor Component
 
-| ![BME690 Environmental sensor breakout](https://raw.githubusercontent.com/SolderedElectronics/Soldered-Generic-Arduino-Library/dev/extras/Soldered-logo-color.png) |
+| ![BME690 Environmental sensor breakout](https://upload.wikimedia.org/wikipedia/commons/8/8f/Example_image.svg) |
 | :---------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 |                                       [BME690 Environmental sensor breakout](https://www.solde.red/333411)                                       |
 
@@ -81,9 +81,6 @@ idf.py build flash monitor
 - **/examples** - examples for using the library
 - **_other_** - idf_component.yml manifest file for ESP Component Registry
 
-### Formatting
-
-Run `./format.sh` before committing to auto-format `src/`, `include/` and the examples against the project's astyle rules (`.astyle_rules.yml`). CI runs the same check on every push/PR via `.github/workflows/format_check.yml` and fails on unformatted code. The Bosch API files sit in subfolders and are deliberately left out of the format globs, so that they stay byte-identical to what Bosch ships.
 
 ### Hardware design
 
