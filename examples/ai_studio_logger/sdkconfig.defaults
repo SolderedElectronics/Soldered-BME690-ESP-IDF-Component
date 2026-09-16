@@ -1,0 +1,6 @@
+# The .bmerawdata file name is far longer than 8.3, so FAT needs long file names
+CONFIG_FATFS_LFN_HEAP=y
+CONFIG_FATFS_MAX_LFN=255
+
+# The JSON header is built in memory before it is written out
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192

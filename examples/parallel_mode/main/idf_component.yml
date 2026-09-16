@@ -1,0 +1,3 @@
+dependencies:
+  Soldered-BME690-ESP-IDF-Component:
+    path: "../../.."

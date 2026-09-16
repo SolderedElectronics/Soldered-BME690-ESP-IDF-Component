@@ -1,40 +1,93 @@
-# Soldered NAZIV PROIZVODA Component
+# Soldered BME690 Environmental Sensor Component
 
-| ![Product name](https://upload.wikimedia.org/wikipedia/commons/8/8f/Example_image.svg) |
-| :------------------------------------------------------------------------------------: |
-|                      [NAZIV PROIZVODA](https://www.solde.red/SKU)                      |
+| ![BME690 Environmental sensor breakout](https://raw.githubusercontent.com/SolderedElectronics/Soldered-Generic-Arduino-Library/dev/extras/Soldered-logo-color.png) |
+| :---------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|                                       [BME690 Environmental sensor breakout](https://www.solde.red/333411)                                       |
 
-OPIS PROIZVODA + LINK NA [Qwiic ecosystem](https://soldered.com/collections/qwiic-ecosystem).
+ESP-IDF component for the Soldered BME690 breakout board. The BME690 is a Bosch environmental sensor which measures temperature, pressure, relative humidity and gas resistance, the last one usable for air quality and, with BME AI-Studio, for gas classification. The board connects over I2C and is part of the [Qwiic ecosystem](https://soldered.com/collections/qwiic-ecosystem), so no soldering is needed to hook it up.
 
-### Using the template
 
-Before publishing a new component make sure to replace:
+### Installation
 
-- `NAZIV PROIZVODA`, `OPIS PROIZVODA`, product image, SKU link, and the "Original source" line in this README
-- `version`, `description`, `url` in `idf_component.yml`
-- `components:` name and `namespace:` in `.github/workflows/upload_component.yml`
-- filenames in `src/` and `include/` plus matching `SRCS` and `INCLUDE_DIRS` in `CMakeLists.txt` and `#include` in the `.c` file
-- dependency key in `examples/.../idf_component.yml` (path stays `../../..`)
-- `@file`, `@brief`, `@param`, `@return` Doxygen comments in `include/*.h`, `src/*.c`, and `examples/basic/main/main.c` to describe the real API
+Add it to your project with the component manager:
 
-Also make sure to add examples.
+```bash
+idf.py add-dependency "solderedelectronics/soldered-bme690"
+```
 
-Run `./format.sh` before committing to auto-format `src/`, `include/`, and the example against the project's astyle rules (`.astyle_rules.yml`). CI runs the same check on every push/PR via `.github/workflows/format_check.yml` and fails on unformatted code.
+Or clone this repository into your project's `components/` folder.
 
-For uploading to Registry you need to register a trusted publisher under a component. To make the release to the registry you must bump `version` in `idf_component.yml` to `X.Y.Z`, push that commit, and confirm Format Check + Build Examples both pass on it (Actions tab) before tagging. Only once both are green: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+### Usage
 
-**Remove this section of README after everything is done!**
+The I2C bus belongs to your application, not to the driver, so that other Qwiic devices can share it. Create the bus first, then hand it over:
+
+```c
+#include "driver/i2c_master.h"
+#include "soldered_bme690.h"
+
+i2c_master_bus_config_t bus_cfg = {
+    .i2c_port = I2C_NUM_0,
+    .sda_io_num = GPIO_NUM_21,
+    .scl_io_num = GPIO_NUM_22,
+    .clk_source = I2C_CLK_SRC_DEFAULT,
+    .glitch_ignore_cnt = 7,
+    .flags.enable_internal_pullup = true,
+};
+i2c_master_bus_handle_t bus;
+ESP_ERROR_CHECK(i2c_new_master_bus(&bus_cfg, &bus));
+
+bme690_t sensor;
+ESP_ERROR_CHECK(bme690_init(&sensor, bus, BME69X_I2C_ADDR_LOW));
+
+bme690_set_tph_default(&sensor);
+bme690_set_filter(&sensor, BME69X_FILTER_SIZE_3);
+bme690_set_heater_prof(&sensor, 300, 100);
+
+bme690_set_op_mode(&sensor, BME69X_FORCED_MODE);
+vTaskDelay(pdMS_TO_TICKS(200));
+
+bme690_data_t data;
+if (bme690_fetch_data(&sensor)) {
+    bme690_get_data(&sensor, &data);
+    printf("%.2f C, %.2f Pa, %.2f %%, %.2f Ohm\n", data.temperature, data.pressure, data.humidity,
+           data.gas_resistance);
+}
+```
+
+Use `BME69X_I2C_ADDR_HIGH` instead if the address jumper on the board is soldered. `bme690_init_with_config()` takes a different I2C clock or a custom idle callback.
+
+Every call leaves the Bosch API result code in the handle, so `bme690_check_status()` and `bme690_status_string()` describe what went wrong after any of them.
+
+### Examples
+
+- **forced_mode** - one measurement at a time, the mode most applications want
+- **sequential_mode** - the sensor steps through a heater profile on its own, sleeping in between
+- **parallel_mode** - the gas sensor sweeps a heater profile while temperature, pressure and humidity are measured continuously
+- **self_test** - runs the built-in self test and prints the unique sensor ID
+- **ai_studio_logger** - records a `.bmerawdata` file on an SD card in the Bosch BME AI-Studio Raw Data Format, ready to be imported into AI-Studio to train a gas classification algorithm. Needs WiFi for the real time clock and an SD card module on the SPI pins
+
+Build any of them with:
+
+```bash
+cd examples/forced_mode
+idf.py set-target esp32
+idf.py build flash monitor
+```
 
 ### Repository Contents
 
-- **/src** - source files (.c)
-- **/include** - header files (.h)
+- **/src** - source files (.c), with the unmodified Bosch BME69x Sensor API in `src/bme69x/`
+- **/include** - header files (.h), with the Bosch API headers in `include/bme69x/`
 - **/examples** - examples for using the library
 - **_other_** - idf_component.yml manifest file for ESP Component Registry
 
+### Formatting
+
+Run `./format.sh` before committing to auto-format `src/`, `include/` and the examples against the project's astyle rules (`.astyle_rules.yml`). CI runs the same check on every push/PR via `.github/workflows/format_check.yml` and fails on unformatted code. The Bosch API files sit in subfolders and are deliberately left out of the format globs, so that they stay byte-identical to what Bosch ships.
+
 ### Hardware design
 
-You can find hardware design for this board in _NAZIV PROIZVODA_ hardware repository.
+You can find hardware design for this board in _BME690 Environmental sensor breakout_ hardware repository.
 
 ### Documentation
 
@@ -52,7 +105,7 @@ At Soldered, we design and manufacture a wide selection of electronic products t
 
 ### Original source
 
-This library is possible thanks to original [arduino-mcp23017](https://github.com/blemasle/arduino-mcp23017) library. Thank you, blemasle.
+This component is possible thanks to the original [BME69x Sensor API](https://github.com/boschsensortec/BME69x_SensorAPI) by Bosch Sensortec. Thank you, Bosch. The Bosch API is BSD-3-Clause licensed, its license is kept alongside the sources in `src/bme69x/LICENSE`.
 
 ### Open-source license
 

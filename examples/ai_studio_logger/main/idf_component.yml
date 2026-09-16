@@ -1,0 +1,5 @@
+dependencies:
+  Soldered-BME690-ESP-IDF-Component:
+    path: "../../.."
+  espressif/cjson:
+    version: "^1.7.18"

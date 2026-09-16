@@ -1,5 +1,5 @@
 CompileFlags:
-  CompilationDatabase: examples/basic/build
+  CompilationDatabase: examples/forced_mode/build
   Remove:
     - -mlongcalls
     - -fno-shrink-wrap
